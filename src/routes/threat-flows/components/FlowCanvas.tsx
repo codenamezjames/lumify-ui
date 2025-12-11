@@ -1,4 +1,5 @@
 import { useMemo, type MutableRefObject } from 'react'
+import { X } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,7 +16,6 @@ type FlowCanvasProps = {
   stickyPosition: InfoBoardState
   selectedId: string | null
   viewport: ViewportState
-  paletteOpen: boolean
   canvasSize: { width: number; height: number }
   canvasRef: MutableRefObject<HTMLDivElement | null>
   onCanvasWheel: (event: React.WheelEvent<HTMLDivElement>) => void
@@ -24,6 +24,7 @@ type FlowCanvasProps = {
   onStickyDragStart: (event: React.PointerEvent<HTMLDivElement>) => void
   onInfoNoteDragStart: (id: string, event: React.PointerEvent<HTMLDivElement>) => void
   onSelectNode: (id: string) => void
+  onRemoveNode: (id: string) => void
 }
 
 export function FlowCanvas({
@@ -33,7 +34,6 @@ export function FlowCanvas({
   stickyPosition,
   selectedId,
   viewport,
-  paletteOpen,
   canvasSize,
   canvasRef,
   onCanvasWheel,
@@ -42,18 +42,19 @@ export function FlowCanvas({
   onStickyDragStart,
   onInfoNoteDragStart,
   onSelectNode,
+  onRemoveNode,
 }: FlowCanvasProps) {
   const transformStyle = useMemo(
     () => ({
-      transform: `translate(${viewport.x + (paletteOpen ? 320 : 0)}px, ${viewport.y}px) scale(${viewport.scale})`,
+      transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
       transformOrigin: '0 0',
     }),
-    [paletteOpen, viewport.scale, viewport.x, viewport.y],
+    [viewport.scale, viewport.x, viewport.y],
   )
 
   return (
-    <Card className="flex-1 border-white/15 bg-black/35 backdrop-blur p-0">
-      <CardContent className="flex-1 p-0 flex flex-col">
+    <Card className="h-full flex-1 border-white/15 bg-black/35 backdrop-blur p-0">
+      <CardContent className="h-full flex-1 p-0 flex flex-col">
         <div
           className="relative flex-1 overflow-hidden rounded-b-2xl border-t border-[#2d3038] bg-[radial-gradient(circle_at_1px_1px,#2b2c33_1px,transparent_0)] bg-[length:18px_18px] cursor-grab active:cursor-grabbing"
           onWheel={onCanvasWheel}
@@ -184,7 +185,21 @@ export function FlowCanvas({
                           </span>
                         </div>
                       </div>
-                      <Badge className={cn('text-[11px] font-medium', statusTone[node.status])}>{node.status}</Badge>
+                      <div className="flex items-center gap-1">
+                        <Badge className={cn('text-[11px] font-medium', statusTone[node.status])}>{node.status}</Badge>
+                        <button
+                          type="button"
+                          aria-label="Remove node"
+                          className="flex h-6 w-6 items-center justify-center rounded-md border border-[#262a34] bg-[#0f1118] text-white/70 hover:border-white/40 hover:text-white"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onRemoveNode(node.id)
+                          }}
+                          data-canvas-interactive="true"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="text-xs text-white/70 leading-snug line-clamp-2">{node.summary}</div>

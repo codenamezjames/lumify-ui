@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Grid, Play } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
+import { ChevronLeft, ChevronRight, Copy, FilePlus2, Grid, Play, Save } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { useSidebar } from '@/components/ui/sidebar'
 import { flows } from '@/data/flows'
-import { cn } from '@/lib/utils'
-
 import { FlowCanvas } from './components/FlowCanvas'
 import { PaletteSidebar } from './components/PaletteSidebar'
 import {
@@ -25,6 +24,7 @@ export const Route = createFileRoute('/threat-flows/$flowId')({
 
 function RouteComponent() {
   const { flowId } = Route.useParams()
+  const { setOpen, setOpenMobile } = useSidebar()
   const baseFlow = useMemo(() => flows.find((f) => f.id === flowId), [flowId])
   const initialNodes = useMemo(() => seedNodes(baseFlow), [baseFlow])
 
@@ -41,6 +41,7 @@ function RouteComponent() {
   const [edges, setEdges] = useState<Edge[]>(() => seedEdges(initialNodes))
   const [selectedId, setSelectedId] = useState<string | null>(() => initialNodes[0]?.id ?? null)
   const [paletteOpen, setPaletteOpen] = useState(true)
+  const [controlsOpen, setControlsOpen] = useState(true)
   const [stickyState, setStickyState] = useState<InfoBoardState>({ x: 900, y: 660 })
   const [infoNotesState, setInfoNotesState] = useState<InfoNote[]>([
     {
@@ -110,6 +111,12 @@ function RouteComponent() {
       signals: baseFlow?.signals ?? ['EDR', 'IAM', 'Email'],
     }))
   }, [baseFlow, flowId])
+
+  useEffect(() => {
+    // Collapse global nav when entering the flow canvas view
+    setOpen(false)
+    setOpenMobile(false)
+  }, [setOpen, setOpenMobile])
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -327,68 +334,98 @@ function RouteComponent() {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[2147483000] isolate bg-neutral-950 text-white overflow-hidden">
-      <div className="fixed left-0 right-0 top-0 z-[2147483001] flex flex-wrap items-center justify-between gap-3 border-b border-[#2d3038] bg-neutral-950 px-4 py-3">
-        <div className="flex items-center gap-3 text-sm">
-          <Link to="/threat-flows">
-            <Button size="sm" variant="outline" className="border-[#2d3038] bg-[#14161c]">
-              Back to threat flows
-            </Button>
-          </Link>
-        </div>
-        <div className="flex flex-1 min-w-[260px] items-center gap-3 text-sm">
-          <div className="leading-tight">
-            <div className="text-sm font-semibold text-white">New threat flow</div>
-            <div className="text-xs text-white/60">
-              Drag-and-drop canvas — visually map detections and actions.
-            </div>
+    <div className="flex flex-col flex-1 min-h-0 bg-transparent text-white overflow-hidden">
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        {paletteOpen ? (
+          <div className="absolute left-4 top-4 z-20">
+            <PaletteSidebar
+              paletteSearch={paletteSearch}
+              onSearchChange={setPaletteSearch}
+              onAddStep={addStep}
+              paletteGroups={paletteGroups}
+              onTogglePalette={() => setPaletteOpen(false)}
+              flowTitle={flowMeta.name || 'New threat flow'}
+            />
           </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" className="gap-2">
-            <Play className="h-4 w-4" />
-            Pretend run
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 border-[#2d3038] bg-[#14161c]"
-            onClick={snapToGrid}
-          >
-            <Grid className="h-4 w-4" />
-            Auto layout
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-2 border-[#2d3038] bg-[#14161c]"
-            disabled={!selectedId}
-            onClick={() => selectedId && removeStep(selectedId)}
-          >
-            Remove selected
-          </Button>
-          <Button
+        ) : (
+          <button
             type="button"
-            variant="outline"
-            className="border-[#2d3038] bg-[#14161c]"
-            onClick={() => setPaletteOpen((v) => !v)}
+            aria-label="Show steps"
+            onClick={() => setPaletteOpen(true)}
+            className="absolute left-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-lg border border-[#1e222d] bg-[#0f1115]/95 text-white shadow-sm hover:border-white/30 hover:text-white"
           >
-            {paletteOpen ? 'Hide steps' : 'Show steps'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="relative h-full w-full max-w-none px-0 pb-0 pt-16 overflow-hidden flex flex-col">
-        {paletteOpen && (
-          <PaletteSidebar
-            paletteSearch={paletteSearch}
-            onSearchChange={setPaletteSearch}
-            onAddStep={addStep}
-            paletteGroups={paletteGroups}
-          />
+            <ChevronRight className="h-4 w-4" />
+          </button>
         )}
 
-        <div className={cn('flex-1 transition-all flex flex-col', paletteOpen ? 'md:pl-0' : 'md:pl-2')}>
+        {controlsOpen ? (
+          <div className="absolute right-4 top-4 z-20 w-60 space-y-3 rounded-xl border border-white/10 bg-black/80 px-4 py-4 shadow-lg backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-wide text-white/60">Controls</div>
+              <button
+                type="button"
+                aria-label="Hide controls"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 hover:border-white/30 hover:text-white"
+                onClick={() => setControlsOpen(false)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <Button size="sm" className="w-full justify-start gap-2">
+                <Play className="h-4 w-4" />
+                Pretend run
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full justify-start gap-2 border-[#2d3038] bg-[#14161c]"
+                onClick={snapToGrid}
+              >
+                <Grid className="h-4 w-4" />
+                Auto layout
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full justify-start gap-2 border-[#2d3038] bg-[#14161c]"
+                onClick={() => {}}
+              >
+                <Save className="h-4 w-4" />
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full justify-start gap-2 border-[#2d3038] bg-[#14161c]"
+                onClick={() => {}}
+              >
+                <Copy className="h-4 w-4" />
+                Duplicate
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full justify-start gap-2 border-[#2d3038] bg-[#14161c]"
+                onClick={() => {}}
+              >
+                <FilePlus2 className="h-4 w-4" />
+                Save as template
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            aria-label="Show controls"
+            onClick={() => setControlsOpen(true)}
+            className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-lg border border-[#1e222d] bg-[#0f1115]/95 text-white shadow-sm hover:border-white/30 hover:text-white"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
+
+        <div className="absolute inset-0 flex flex-col">
           <FlowCanvas
             nodes={nodes}
             edges={edges}
@@ -396,7 +433,6 @@ function RouteComponent() {
             stickyPosition={stickyState}
             selectedId={selectedId}
             viewport={viewport}
-            paletteOpen={paletteOpen}
             canvasSize={canvasSize}
             canvasRef={canvasRef}
             onCanvasWheel={onCanvasWheel}
@@ -405,6 +441,7 @@ function RouteComponent() {
             onStickyDragStart={onStickyDragStart}
             onInfoNoteDragStart={onInfoNoteDragStart}
             onSelectNode={setSelectedId}
+            onRemoveNode={removeStep}
           />
         </div>
       </div>
