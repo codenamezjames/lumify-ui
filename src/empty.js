@@ -1,2 +1,2 @@
-export const AsyncLocalStorage = class {}
-export default {}
+export const AsyncLocalStorage = class {};
+export default {};
