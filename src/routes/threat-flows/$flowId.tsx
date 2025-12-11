@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Activity,
-  Beaker,
   Bot,
   Cpu,
   Database,
@@ -17,7 +16,6 @@ import {
   Network,
   OctagonMinus,
   Play,
-  Flame,
   MessageSquare,
   StickyNote as StickyNoteIcon,
   Ticket,
@@ -301,14 +299,13 @@ function RouteComponent() {
   const [edges, setEdges] = useState<Edge[]>(() => seedEdges(seedNodes(baseFlow)))
   const [selectedId, setSelectedId] = useState<string | null>(() => nodes[0]?.id ?? null)
   const [paletteOpen, setPaletteOpen] = useState(true)
-  const [infoBoardState, setInfoBoardState] = useState<InfoBoardState>({ x: 24, y: 24 })
-  const [stickyState, setStickyState] = useState<InfoBoardState>({ x: 36, y: 520 })
+  const [stickyState, setStickyState] = useState<InfoBoardState>({ x: 900, y: 660 })
   const [infoNotesState, setInfoNotesState] = useState<InfoNote[]>([
     {
       id: 'note-trigger',
       title: 'Trigger mapping',
       body: 'Match the trigger to an identifier in the incoming payload.',
-      x: 840,
+      x: 900,
       y: 40,
       width: 260,
     },
@@ -316,7 +313,7 @@ function RouteComponent() {
       id: 'note-setup',
       title: 'Integration setup',
       body: 'Notify Slack if a new IOC is generated; keep mappings in sync.',
-      x: 840,
+      x: 900,
       y: 170,
       width: 260,
     },
@@ -324,7 +321,7 @@ function RouteComponent() {
       id: 'note-detections',
       title: 'Detection fetch',
       body: 'Pull detections for the incident using a filter based on device id.',
-      x: 840,
+      x: 900,
       y: 320,
       width: 260,
     },
@@ -332,12 +329,11 @@ function RouteComponent() {
       id: 'note-hashes',
       title: 'Hash lookup',
       body: 'If detections are found, inspect behaviors for SHA256 hashes.',
-      x: 780,
+      x: 900,
       y: 500,
       width: 260,
     },
   ])
-  const infoDragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
   const stickyDragRef = useRef<{ offsetX: number; offsetY: number } | null>(null)
   const infoNoteDragRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 })
@@ -425,7 +421,7 @@ function RouteComponent() {
       owner: flowMeta.owner,
       signals: [flowMeta.signals[0] ?? 'Telemetry'],
       status: 'Draft',
-      x: 220 + ((nodes.length % 2) * (NODE_WIDTH + 140)),
+      x: 220 + ((nodes.length % 2) * (NODE_WIDTH + 100)),
       y: 180 + layoutOffset,
     }
     setNodes((prev) => [...prev, newNode])
@@ -454,15 +450,6 @@ function RouteComponent() {
       id,
       offsetX: event.clientX - rect.left - node.x,
       offsetY: event.clientY - rect.top - node.y,
-    }
-  }
-
-  const onInfoDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect()
-    if (!rect) return
-    infoDragRef.current = {
-      offsetX: event.clientX - rect.left - infoBoardState.x,
-      offsetY: event.clientY - rect.top - infoBoardState.y,
     }
   }
 
@@ -543,16 +530,6 @@ function RouteComponent() {
       if (!canvasRef.current) return
       const rect = canvasRef.current.getBoundingClientRect()
 
-      if (infoDragRef.current) {
-        const x = clamp(
-          event.clientX - rect.left - infoDragRef.current.offsetX,
-          8,
-          rect.width - 440,
-        )
-        const y = clamp(event.clientY - rect.top - infoDragRef.current.offsetY, 8, rect.height - 220)
-        setInfoBoardState({ x, y })
-      }
-
       if (stickyDragRef.current) {
         const x = clamp(
           event.clientX - rect.left - stickyDragRef.current.offsetX,
@@ -585,7 +562,6 @@ function RouteComponent() {
       }
     }
     const onUp = () => {
-      infoDragRef.current = null
       stickyDragRef.current = null
       infoNoteDragRef.current = null
       if (panDragRef.current) {
@@ -598,7 +574,7 @@ function RouteComponent() {
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
     }
-  }, [infoBoardState.x, infoBoardState.y])
+  }, [])
 
   const filteredPaletteGroups = paletteGroups
     .map((group) => ({
@@ -618,9 +594,6 @@ function RouteComponent() {
               Back to threat flows
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
-            <Badge className="border-white/10 bg-white/10 text-white">{nodes.length} steps</Badge>
-          </div>
         </div>
         <div className="flex flex-1 min-w-[260px] items-center gap-3 text-sm">
           <div className="leading-tight">
@@ -737,7 +710,6 @@ function RouteComponent() {
                         transformOrigin: '0 0',
                       }}
                     >
-                      <InfoBoard onDragStart={onInfoDragStart} position={infoBoardState} />
                       {infoNotesState.map((note) => (
                         <div
                           key={note.id}
@@ -876,7 +848,7 @@ function RouteComponent() {
                           </div>
                           <div className="space-y-3 p-3">
                             <div className="text-sm font-semibold leading-tight text-white">{node.title}</div>
-                            <div className="text-xs text-white/65 line-clamp-2">{node.summary}</div>
+                            <div className="text-xs text-white/65 truncate">{node.summary}</div>
                           <div className="flex flex-wrap gap-1.5 max-w-full">
                               {node.signals.map((signal) => (
                                 <Badge key={signal} className="border-white/10 bg-white/5 text-[11px] text-white">
@@ -893,7 +865,7 @@ function RouteComponent() {
                         body="Need to see if this is pulling the metadata yet. It was broken after the outage."
                         position={stickyState}
                         onDragStart={onStickyDragStart}
-                        width={300}
+                        width={260}
                       />
                     </div>
                   </div>
@@ -949,7 +921,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: signals.slice(0, 2),
       status: 'Ready',
-      x: 520,
+      x: 420,
       y: 80,
       iconName: 'collect',
     },
@@ -961,7 +933,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Flag'],
       status: 'Ready',
-      x: 520,
+      x: 420,
       y: 320,
       iconName: 'if',
     },
@@ -973,7 +945,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Context'],
       status: 'Ready',
-      x: 320,
+      x: 240,
       y: 540,
       iconName: 'workflow',
     },
@@ -985,7 +957,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Context'],
       status: 'Ready',
-      x: 720,
+      x: 560,
       y: 540,
       iconName: 'workflow',
     },
@@ -997,7 +969,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Email'],
       status: 'Draft',
-      x: 320,
+      x: 240,
       y: 780,
       iconName: 'transform',
     },
@@ -1009,7 +981,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Email'],
       status: 'Draft',
-      x: 720,
+      x: 560,
       y: 780,
       iconName: 'notify',
     },
@@ -1021,7 +993,7 @@ function seedNodes(flow: (typeof flows)[number] | undefined): FlowNode[] {
       owner: baseOwner,
       signals: ['Template'],
       status: 'Draft',
-      x: 520,
+      x: 420,
       y: 1020,
       iconName: 'notify',
     },
@@ -1050,51 +1022,10 @@ function normalizeLayout(nodes: FlowNode[], width: number) {
     const row = Math.floor(index / cols)
     return {
       ...node,
-      x: 80 + col * (NODE_WIDTH + 100),
+      x: 60 + col * (NODE_WIDTH + 80),
       y: 160 + row * (NODE_HEIGHT + 170),
     }
   })
-}
-
-function InfoBoard({
-  onDragStart,
-  position,
-}: {
-  onDragStart: (event: React.PointerEvent<HTMLDivElement>) => void
-  position: { x: number; y: number }
-}) {
-  return (
-    <div
-      className="absolute w-[420px] cursor-grab rounded-2xl border border-[#2d3038] bg-[#0f1014] p-5 text-sm text-white/85 shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur active:cursor-grabbing"
-      style={{ left: position.x, top: position.y }}
-      onPointerDown={onDragStart}
-      data-canvas-interactive="true"
-    >
-      <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60 select-none">
-        <Badge className="border-white/10 bg-white/10 text-[11px] text-white">Workflow</Badge>
-        <Sparkles className="h-4 w-4 text-white" />
-      </div>
-      <div className="mt-3 space-y-3 select-none">
-        <div className="text-lg font-semibold leading-snug text-white">
-          Create IOCs on Malicious Files from a CrowdStrike Incident
-        </div>
-        <p className="text-white/75 leading-relaxed">
-          When a CrowdStrike incident is received, pull the detection IDs that are relevant and loop over the detection details.
-          Lookup SHA256 in VT; if malicious, alert Slack and add the IOC to CrowdStrike to block further execution.
-        </p>
-        <div className="flex gap-2 text-xs text-white/65">
-          <Badge className="border-white/10 bg-white/5 text-white">CrowdStrike</Badge>
-          <Badge className="border-white/10 bg-white/5 text-white">IOC Automation</Badge>
-          <Badge className="border-white/10 bg-white/5 text-white">Loop</Badge>
-        </div>
-        <div className="flex items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-[#1b1c20] to-[#0f0f12] px-4 py-6">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg">
-            <Flame className="h-10 w-10" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 function StickyNote({
@@ -1112,16 +1043,15 @@ function StickyNote({
 }) {
   return (
     <div
-      className="absolute cursor-grab rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 shadow-md backdrop-blur active:cursor-grabbing"
+      className="absolute cursor-grab rounded-xl border border-[#2d3038] bg-[#0f1116] px-4 py-3 text-sm text-white/75 shadow-[0_10px_30px_rgba(0,0,0,0.45)] active:cursor-grabbing"
       style={{ left: position.x, top: position.y, width }}
       onPointerDown={onDragStart}
       data-canvas-interactive="true"
     >
-      <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-white/60">
-        <Beaker className="h-4 w-4 text-white" />
+      <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-white/60">
         {title}
       </div>
-      <div className="text-white/75">{body}</div>
+      <div className="leading-relaxed">{body}</div>
     </div>
   )
 }
