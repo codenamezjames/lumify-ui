@@ -35,8 +35,31 @@ jobs:
           VITE_PUBLIC_BASE: /lumify-ui/
         run: npm run build
 
-      - name: Add SPA fallback
-        run: cp .output/public/index.html .output/public/404.html
+      - name: Generate index.html and SPA fallback
+        run: |
+          set -euo pipefail
+          JS=$(basename "$(ls .output/public/assets/main-*.js | head -n1)")
+          CSS=$(basename "$(ls .output/public/assets/styles-*.css | head -n1)")
+          cat > .output/public/index.html <<'HTML'
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="/lumify-ui/" />
+  <link rel="icon" href="/lumify-ui/favicon.ico" />
+  <link rel="stylesheet" href="/lumify-ui/assets/STYLES" />
+  <title>Lumify UI</title>
+</head>
+<body style="margin:0; background:#0b0c10; color:#fff;">
+  <div id="root"></div>
+  <script type="module" src="/lumify-ui/assets/MAIN"></script>
+</body>
+</html>
+HTML
+          sed -i "s/MAIN/$JS/" .output/public/index.html
+          sed -i "s/STYLES/$CSS/" .output/public/index.html
+          cp .output/public/index.html .output/public/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
