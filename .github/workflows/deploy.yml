@@ -35,6 +35,9 @@ jobs:
           VITE_PUBLIC_BASE: /lumify-ui/
         run: npm run build
 
+      - name: Add SPA fallback
+        run: cp .output/public/index.html .output/public/404.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
