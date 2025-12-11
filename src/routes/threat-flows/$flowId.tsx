@@ -487,11 +487,19 @@ function RouteComponent() {
     }
   }
 
+  const isCanvasInteractiveTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false
+    if (target.closest('button, a, input, textarea, select, option')) return true
+    return Boolean(target.closest('[data-canvas-interactive="true"]'))
+  }
+
   const onPanPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const isMiddle = event.button === 1
     const withShift = event.shiftKey
-    const onBackground = event.currentTarget === event.target && event.button === 0
-    if (!(isMiddle || withShift || onBackground)) return
+    const isPrimary = event.button === 0
+    const isInteractiveTarget = isCanvasInteractiveTarget(event.target)
+    const shouldPan = isMiddle || withShift || (isPrimary && !isInteractiveTarget)
+    if (!shouldPan) return
     event.preventDefault()
     panDragRef.current = {
       startX: event.clientX,
@@ -739,6 +747,7 @@ function RouteComponent() {
                             top: note.y,
                             width: note.width ?? 260,
                           }}
+                          data-canvas-interactive="true"
                           onPointerDown={(e) => onInfoNoteDragStart(note.id, e)}
                         >
                           {note.title && (
@@ -812,6 +821,7 @@ function RouteComponent() {
                             }}
                             aria-label="Insert step"
                             type="button"
+                            data-canvas-interactive="true"
                           >
                             +
                           </button>
@@ -839,6 +849,7 @@ function RouteComponent() {
                           height: NODE_HEIGHT,
                           transform: `translate(${node.x}px, ${node.y}px)`,
                         }}
+                          data-canvas-interactive="true"
                       >
                           <div className="flex items-center justify-between border-b border-[#2d3038] px-3 py-2">
                             <div className="flex items-center gap-2">
@@ -1057,6 +1068,7 @@ function InfoBoard({
       className="absolute w-[420px] cursor-grab rounded-2xl border border-[#2d3038] bg-[#0f1014] p-5 text-sm text-white/85 shadow-[0_20px_40px_rgba(0,0,0,0.6)] backdrop-blur active:cursor-grabbing"
       style={{ left: position.x, top: position.y }}
       onPointerDown={onDragStart}
+      data-canvas-interactive="true"
     >
       <div className="flex items-center justify-between text-xs uppercase tracking-wide text-white/60 select-none">
         <Badge className="border-white/10 bg-white/10 text-[11px] text-white">Workflow</Badge>
@@ -1103,6 +1115,7 @@ function StickyNote({
       className="absolute cursor-grab rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 shadow-md backdrop-blur active:cursor-grabbing"
       style={{ left: position.x, top: position.y, width }}
       onPointerDown={onDragStart}
+      data-canvas-interactive="true"
     >
       <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-wide text-white/60">
         <Beaker className="h-4 w-4 text-white" />
