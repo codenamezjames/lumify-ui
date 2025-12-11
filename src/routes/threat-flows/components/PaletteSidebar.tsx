@@ -3,7 +3,7 @@ import { ChevronLeft, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-import { iconMap, paletteTone } from '../flow-constants'
+import { iconMap, nodeIconTone } from '../flow-constants'
 import type { FlowNode, PaletteGroup, StepKind } from '../flow-types'
 
 type PaletteSidebarProps = {
@@ -72,12 +72,17 @@ export function PaletteSidebar({
                     key={item.label}
                     type="button"
                     className={cn(
-                      'flex flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center transition hover:border-white/30 hover:bg-white/5',
-                      paletteTone[item.icon],
+                      'flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-center transition',
+                      'bg-transparent hover:bg-white/5',
                     )}
                     onClick={() => onAddStep(item.kind, { iconName: item.icon, title: item.label })}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg border text-white',
+                        nodeIconTone[item.icon] ?? 'border-white/10 bg-white/5 text-white',
+                      )}
+                    >
                       {iconMap[item.icon]}
                     </div>
                     <div className="leading-tight text-white text-center">

@@ -110,19 +110,32 @@ export const nodeIconTone: Partial<Record<PaletteIcon, string>> = {
   'ai-task': 'bg-[#231c33] text-purple-100 border-purple-500/30',
   loop: 'bg-[#12314b] text-blue-100 border-blue-500/30',
   break: 'bg-[#3b1a1a] text-red-100 border-red-500/35',
-  collect: 'bg-[#10363c] text-cyan-100 border-cyan-500/30',
+  collect: 'bg-[#0f3b2f] text-emerald-100 border-emerald-500/35',
   exit: 'bg-[#3b1b1b] text-red-100 border-red-500/30',
   wait: 'bg-[#352919] text-amber-100 border-amber-500/30',
   workflow: 'bg-[#1f2430] text-white border-white/20',
   dedup: 'bg-[#362317] text-amber-100 border-amber-500/30',
-  interact: 'bg-[#192c3d] text-sky-100 border-sky-500/30',
-  loading: 'bg-[#192c3d] text-sky-100 border-sky-500/30',
-  transform: 'bg-[#0f2d44] text-blue-100 border-blue-500/30',
-  webhook: 'bg-[#192c3d] text-sky-100 border-sky-500/30',
+  interact: 'bg-[#1b2550] text-indigo-100 border-indigo-500/35',
+  loading: 'bg-[#2a1f40] text-purple-100 border-purple-500/35',
+  transform: 'bg-[#0f2f4f] text-blue-100 border-blue-500/35',
+  webhook: 'bg-[#0d3343] text-cyan-100 border-cyan-500/35',
   notify: 'bg-[#2f2418] text-orange-100 border-orange-500/30',
   enrich: 'bg-[#2e2918] text-amber-100 border-amber-500/30',
   decision: 'bg-[#1a2741] text-indigo-100 border-indigo-500/30',
   action: 'bg-[#223119] text-lime-100 border-lime-500/30',
+  trigger: 'bg-[#123241] text-cyan-100 border-cyan-500/35',
+  'test-trigger': 'bg-[#311b3e] text-fuchsia-100 border-fuchsia-500/35',
+  'get-detection': 'bg-[#162845] text-sky-100 border-sky-500/35',
+  'get-user': 'bg-[#1c2f23] text-emerald-100 border-emerald-500/35',
+  // align logic variants with their canvas counterparts
+  'logic-if': 'bg-[#1e3a2c] text-lime-100 border-lime-500/30',
+  'logic-wait': 'bg-[#352919] text-amber-100 border-amber-500/30',
+  'transform-extract': 'bg-[#0f2f4f] text-blue-100 border-blue-500/35',
+  'action-ticket': 'bg-[#231d16] text-amber-100 border-amber-500/30',
+  'action-webhook': 'bg-[#0d3343] text-cyan-100 border-cyan-500/35',
+  'action-watchlist': 'bg-[#242016] text-orange-100 border-orange-500/30',
+  'notify-slack': 'bg-[#1b233a] text-indigo-100 border-indigo-500/35',
+  'meta-comment': 'bg-[#1f1f24] text-white border-white/20',
 }
 
 export const kindMeta: Record<StepKind, KindMeta> = {
@@ -161,25 +174,13 @@ export const statusTone: Record<StepStatus, string> = {
 
 export const paletteGroups: PaletteGroup[] = [
   {
-    label: 'Operators',
-    icon: <Workflow className="h-4 w-4" />,
-    items: [
-      { label: 'Collect', kind: 'sensor', icon: 'collect' },
-      { label: 'Workflow', kind: 'action', icon: 'workflow' },
-      { label: 'Wait', kind: 'notify', icon: 'wait' },
-      { label: 'Exit', kind: 'action', icon: 'exit' },
-      { label: 'Dedup', kind: 'decision', icon: 'dedup' },
-      { label: 'Interact', kind: 'enrich', icon: 'interact' },
-      { label: 'Transform', kind: 'enrich', icon: 'transform' },
-      { label: 'Loading', kind: 'sensor', icon: 'loading' },
-    ],
-  },
-  {
     label: 'Triggers',
     icon: <Activity className="h-4 w-4" />,
     items: [
       { label: 'Threat', kind: 'sensor', icon: 'trigger' },
       { label: 'Test', kind: 'sensor', icon: 'test-trigger' },
+      { label: 'Collect', kind: 'sensor', icon: 'collect' },
+      { label: 'Loading', kind: 'sensor', icon: 'loading' },
     ],
   },
   {
@@ -188,6 +189,7 @@ export const paletteGroups: PaletteGroup[] = [
     items: [
       { label: 'Detection Details', kind: 'enrich', icon: 'get-detection' },
       { label: 'User Details', kind: 'enrich', icon: 'get-user' },
+      { label: 'Interact', kind: 'enrich', icon: 'interact' },
     ],
   },
   {
@@ -195,13 +197,17 @@ export const paletteGroups: PaletteGroup[] = [
     icon: <Workflow className="h-4 w-4" />,
     items: [
       { label: 'IF Condition', kind: 'decision', icon: 'logic-if' },
-      { label: 'Wait / Delay', kind: 'notify', icon: 'logic-wait' },
+      { label: 'Wait', kind: 'notify', icon: 'wait' },
+      { label: 'Dedup', kind: 'decision', icon: 'dedup' },
     ],
   },
   {
     label: 'Transform',
     icon: <GitBranch className="h-4 w-4" />,
-    items: [{ label: 'Extract Field', kind: 'enrich', icon: 'transform-extract' }],
+    items: [
+      { label: 'Extract Field', kind: 'enrich', icon: 'transform-extract' },
+      { label: 'Transform', kind: 'enrich', icon: 'transform' },
+    ],
   },
   {
     label: 'Actions',
@@ -210,6 +216,8 @@ export const paletteGroups: PaletteGroup[] = [
       { label: 'Update Ticket', kind: 'action', icon: 'action-ticket' },
       { label: 'Webhook Event', kind: 'notify', icon: 'action-webhook' },
       { label: 'Watchlist / IOC', kind: 'action', icon: 'action-watchlist' },
+      { label: 'Workflow', kind: 'action', icon: 'workflow' },
+      { label: 'Exit', kind: 'action', icon: 'exit' },
     ],
   },
   {
