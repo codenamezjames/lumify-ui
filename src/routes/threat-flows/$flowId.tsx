@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/ui/sidebar'
 import { flows } from '@/data/flows'
 import { FlowCanvas } from './components/FlowCanvas'
+import { NodeEditPopover } from '@/features/threat-flows/components/NodeEditPopover'
 import { PaletteSidebar } from './components/PaletteSidebar'
 import {
   MAX_SCALE,
@@ -17,6 +18,7 @@ import {
 } from './flow-constants'
 import { clamp, defaultSummary, defaultTitle, normalizeLayout, seedEdges, seedNodes } from './flow-utils'
 import type { Edge, FlowNode, InfoBoardState, InfoNote, StepKind, ViewportState } from './flow-types'
+import { resolveUpstreamFields } from './utils/field-context'
 
 export const Route = createFileRoute('/threat-flows/$flowId')({
   component: RouteComponent,
@@ -40,6 +42,7 @@ function RouteComponent() {
   const [nodes, setNodes] = useState<FlowNode[]>(initialNodes)
   const [edges, setEdges] = useState<Edge[]>(() => seedEdges(initialNodes))
   const [selectedId, setSelectedId] = useState<string | null>(() => initialNodes[0]?.id ?? null)
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
   const [paletteOpen, setPaletteOpen] = useState(true)
   const [controlsOpen, setControlsOpen] = useState(true)
   const [stickyState, setStickyState] = useState<InfoBoardState>({ x: 900, y: 660 })
@@ -195,6 +198,12 @@ function RouteComponent() {
     setEdges((prev) => prev.filter((edge) => edge.from !== id && edge.to !== id))
   }
 
+  const updateNode = (id: string, patch: Partial<FlowNode>) => {
+    setNodes((prev) =>
+      prev.map((node) => (node.id === id ? { ...node, ...patch } : node))
+    )
+  }
+
   const snapToGrid = () => {
     setNodes((prev) => normalizeLayout(prev, canvasSize.width))
   }
@@ -243,6 +252,13 @@ function RouteComponent() {
     const isPrimary = event.button === 0
     const isInteractiveTarget = isCanvasInteractiveTarget(event.target)
     const shouldPan = isMiddle || withShift || (isPrimary && !isInteractiveTarget)
+
+    // Close edit popover when clicking on canvas background (blur)
+    if (isPrimary && !isInteractiveTarget) {
+      setEditingNodeId(null)
+      setSelectedId(null)
+    }
+
     if (!shouldPan) return
     event.preventDefault()
     panDragRef.current = {
@@ -325,6 +341,7 @@ function RouteComponent() {
         panDragRef.current.active = false
       }
     }
+
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     return () => {
@@ -432,6 +449,7 @@ function RouteComponent() {
             infoNotes={infoNotesState}
             stickyPosition={stickyState}
             selectedId={selectedId}
+            editingNodeId={editingNodeId}
             viewport={viewport}
             canvasSize={canvasSize}
             canvasRef={canvasRef}
@@ -441,9 +459,20 @@ function RouteComponent() {
             onStickyDragStart={onStickyDragStart}
             onInfoNoteDragStart={onInfoNoteDragStart}
             onSelectNode={setSelectedId}
-            onRemoveNode={removeStep}
+            onEditNode={setEditingNodeId}
           />
         </div>
+
+        <NodeEditPopover
+          node={editingNodeId ? nodes.find(n => n.id === editingNodeId) ?? null : null}
+          open={editingNodeId !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingNodeId(null)
+          }}
+          onUpdate={updateNode}
+          anchorEl={null}
+          upstreamFields={editingNodeId ? resolveUpstreamFields(editingNodeId, nodes, edges) : []}
+        />
       </div>
     </div>
   )

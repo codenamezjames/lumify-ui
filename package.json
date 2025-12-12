@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "npm run dev",
     "dev": "vite dev --port 3000",
     "build": "vite build",
     "build:spa": "vite build --config vite.spa.config.ts",

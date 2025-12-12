@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
+import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router'
 
 import { AppSidebar, Topbar } from '../components/Header'
 import {
@@ -30,8 +30,23 @@ export const Route = createRootRoute({
     ],
   }),
 
+  component: RootLayout,
   shellComponent: RootDocument,
 })
+
+function RootLayout() {
+  return (
+    <SidebarProvider defaultOpen>
+      <div className="flex min-h-screen text-white" style={{ width: '100%', background: '#0a0a0a' }}>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col w-full bg-transparent">
+          <Topbar />
+          <Outlet />
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
@@ -40,15 +55,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body className="dark text-white bg-[#0a0a0a]">
-        <SidebarProvider defaultOpen>
-          <div className="flex min-h-screen text-white" style={{ width: '100%', background: '#0a0a0a' }}>
-            <AppSidebar />
-            <SidebarInset className="flex flex-col w-full bg-transparent">
-              <Topbar />
-              {children}
-            </SidebarInset>
-          </div>
-        </SidebarProvider>
+        {children}
         <Scripts />
       </body>
     </html>

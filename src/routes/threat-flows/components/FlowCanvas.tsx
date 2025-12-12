@@ -1,5 +1,5 @@
-import { useMemo, type MutableRefObject } from 'react'
-import { X } from 'lucide-react'
+import { useMemo, useRef, type MutableRefObject } from 'react'
+import { Pencil } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,6 +15,7 @@ type FlowCanvasProps = {
   infoNotes: InfoNote[]
   stickyPosition: InfoBoardState
   selectedId: string | null
+  editingNodeId: string | null
   viewport: ViewportState
   canvasSize: { width: number; height: number }
   canvasRef: MutableRefObject<HTMLDivElement | null>
@@ -24,7 +25,7 @@ type FlowCanvasProps = {
   onStickyDragStart: (event: React.PointerEvent<HTMLDivElement>) => void
   onInfoNoteDragStart: (id: string, event: React.PointerEvent<HTMLDivElement>) => void
   onSelectNode: (id: string) => void
-  onRemoveNode: (id: string) => void
+  onEditNode: (id: string | null) => void
 }
 
 export function FlowCanvas({
@@ -33,6 +34,7 @@ export function FlowCanvas({
   infoNotes,
   stickyPosition,
   selectedId,
+  editingNodeId,
   viewport,
   canvasSize,
   canvasRef,
@@ -42,8 +44,10 @@ export function FlowCanvas({
   onStickyDragStart,
   onInfoNoteDragStart,
   onSelectNode,
-  onRemoveNode,
+  onEditNode,
 }: FlowCanvasProps) {
+  const nodeRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
   const transformStyle = useMemo(
     () => ({
       transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
@@ -145,12 +149,25 @@ export function FlowCanvas({
               {nodes.map((node) => (
                 <div
                   key={node.id}
+                  ref={(el) => {
+                    if (el) nodeRefs.current.set(node.id, el)
+                  }}
                   role="button"
                   onPointerDown={(event) => {
                     onStartDrag(node.id, event)
                     onSelectNode(node.id)
+                    // Switch popover to this node if one is already open
+                    if (editingNodeId && editingNodeId !== node.id) {
+                      onEditNode(node.id)
+                    }
                   }}
-                  onClick={() => onSelectNode(node.id)}
+                  onClick={() => {
+                    onSelectNode(node.id)
+                    // Switch popover to this node if one is already open
+                    if (editingNodeId && editingNodeId !== node.id) {
+                      onEditNode(node.id)
+                    }
+                  }}
                   className={cn(
                     'absolute select-none rounded-xl border shadow-[0_12px_28px_rgba(0,0,0,0.55)] transition will-change-transform',
                     'bg-[#0c0e15] border-[#1c1f27]',
@@ -189,15 +206,17 @@ export function FlowCanvas({
                         <Badge className={cn('text-[11px] font-medium', statusTone[node.status])}>{node.status}</Badge>
                         <button
                           type="button"
-                          aria-label="Remove node"
+                          aria-label="Edit node"
                           className="flex h-6 w-6 items-center justify-center rounded-md border border-[#262a34] bg-[#0f1118] text-white/70 hover:border-white/40 hover:text-white"
+                          onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.stopPropagation()
-                            onRemoveNode(node.id)
+                            onSelectNode(node.id)
+                            onEditNode(node.id)
                           }}
                           data-canvas-interactive="true"
                         >
-                          <X className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
@@ -226,6 +245,7 @@ export function FlowCanvas({
           </div>
         </div>
       </CardContent>
+
     </Card>
   )
 }
